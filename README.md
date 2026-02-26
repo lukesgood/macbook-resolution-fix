@@ -5,8 +5,9 @@ Unlock custom resolutions on older MacBooks by generating display override confi
 ## Features
 
 - Add HiDPI scaled resolutions beyond default options
+- Enable font smoothing (subpixel antialiasing) for clearer text
 - Support for various MacBook models
-- Simple Python script with no dependencies
+- Simple scripts with no dependencies
 
 ## Supported Resolutions
 
@@ -25,6 +26,8 @@ cd macbook-resolution-fix
 
 ## Usage
 
+### Resolution Configuration
+
 1. Run the script to generate the configuration file:
 
 ```bash
@@ -41,6 +44,18 @@ sudo cp /tmp/DisplayProductID-9cc5-fixed /Library/Displays/Contents/Resources/Ov
 3. Restart your Mac
 
 4. Go to System Preferences → Displays and select your desired resolution
+
+### Font Smoothing (Optional)
+
+Enable subpixel antialiasing for clearer text on non-Retina displays:
+
+```bash
+./apply_font_smoothing.sh 2
+```
+
+Levels: 0 (off), 1 (light), 2 (medium), 3 (strong)
+
+Log out and log back in to apply changes.
 
 ## Customization
 
