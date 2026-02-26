@@ -4,39 +4,64 @@ MacBook Resolution Fix
 Generate custom display resolution configuration for older MacBooks
 """
 import plistlib
+import sys
 
-# Display configuration
-# Change these values for your specific MacBook model
-DISPLAY_CONFIG = {
-    'DisplayProductID': 40133,  # 0x9cc5
-    'DisplayVendorID': 1552,    # 0x610
-    'DisplayProductName': 'Color LCD',
-    'scale-resolutions': [
-        bytes.fromhex('000005a0000003840000000100000000'),  # 1440x900
-        bytes.fromhex('00000690000004 1a0000000100000000'),  # 1680x1050
-        bytes.fromhex('00000640000003e80000000100000000'),  # 1600x1000
-        bytes.fromhex('00000780000004b00000000100000000'),  # 1920x1200
-        bytes.fromhex('00000400000002800000000100000000'),  # 1024x640
+def encode_resolution(width, height):
+    """Encode resolution to bytes format"""
+    return bytes.fromhex(f'{width:08x}{height:08x}0000000100000000')
+
+def generate_config(vendor_id, product_id, custom_resolutions=None):
+    """Generate display configuration"""
+    default_resolutions = [
+        (1024, 640),
+        (1440, 900),
+        (1600, 1000),
+        (1680, 1050),
+        (1920, 1200),
     ]
-}
-
-OUTPUT_FILE = '/tmp/DisplayProductID-9cc5-fixed'
+    
+    resolutions = custom_resolutions if custom_resolutions else default_resolutions
+    
+    config = {
+        'DisplayProductID': product_id,
+        'DisplayVendorID': vendor_id,
+        'DisplayProductName': 'Color LCD',
+        'scale-resolutions': [encode_resolution(w, h) for w, h in resolutions]
+    }
+    
+    return config
 
 def main():
-    with open(OUTPUT_FILE, 'wb') as f:
-        plistlib.dump(DISPLAY_CONFIG, f)
+    if len(sys.argv) < 3:
+        vendor_id = 1552  # 0x610
+        product_id = 40133  # 0x9cc5
+    else:
+        vendor_id = int(sys.argv[1])
+        product_id = int(sys.argv[2])
     
-    print(f"✓ Configuration file created: {OUTPUT_FILE}")
+    # Custom resolutions from command line (optional)
+    custom_resolutions = None
+    if len(sys.argv) > 3:
+        custom_resolutions = []
+        for i in range(3, len(sys.argv), 2):
+            if i + 1 < len(sys.argv):
+                w, h = int(sys.argv[i]), int(sys.argv[i + 1])
+                custom_resolutions.append((w, h))
+    
+    config = generate_config(vendor_id, product_id, custom_resolutions)
+    
+    product_hex = f'{product_id:x}'
+    output_file = f'/tmp/DisplayProductID-{product_hex}'
+    
+    with open(output_file, 'wb') as f:
+        plistlib.dump(config, f)
+    
+    print(f"✓ Configuration file created: {output_file}")
+    print(f"  Vendor ID: {vendor_id} (0x{vendor_id:x})")
+    print(f"  Product ID: {product_id} (0x{product_id:x})")
     print("\nAvailable resolutions:")
-    print("  - 1024 x 640")
-    print("  - 1440 x 900  (Recommended)")
-    print("  - 1600 x 1000")
-    print("  - 1680 x 1050")
-    print("  - 1920 x 1200")
-    print("\nNext steps:")
-    print("  1. sudo mkdir -p /Library/Displays/Contents/Resources/Overrides/DisplayVendorID-610")
-    print(f"  2. sudo cp {OUTPUT_FILE} /Library/Displays/Contents/Resources/Overrides/DisplayVendorID-610/")
-    print("  3. Restart your Mac")
+    for w, h in (custom_resolutions or [(1024, 640), (1440, 900), (1600, 1000), (1680, 1050), (1920, 1200)]):
+        print(f"  - {w} x {h}")
 
 if __name__ == '__main__':
     main()
